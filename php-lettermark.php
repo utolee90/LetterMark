@@ -142,11 +142,11 @@ class LetterMark {
                 'close' => '>>',
                 'multiline' => false,
                 'processor' => array($this,'textProcessor')),
-			array( # Bolf Parser, deactivate after blank or  /[\t]*(\*|\#|:|;)
+			/* array( # Bolf Parser, deactivate after blank or  /[\t]*(\*|\#|:|;)
                 'open'	=> '**',
                 'close' => '**',
                 'multiline' => false,
-                'processor' => array($this,'astProcessor')),				
+                'processor' => array($this,'astProcessor')),*/			
 		     /* array( # Ping Tag - Needs more improvement.
                 'open'	=> '{@',
                 'close' => '}',
@@ -507,8 +507,8 @@ class LetterMark {
 
 				if((!strlen($innerstr)) ||($bracket['multiline'] && strpos($innerstr, "\n")===false))
 					return false;
-				elseif ($bracket['open'] == '**')
-					$result = astProcessor($innerstr,$astparse);
+/*				elseif ($bracket['open'] == '**')
+					$result = astProcessor($innerstr,$astparse); */
 				else
 					$result = call_user_func_array($bracket['processor'],array($innerstr, $bracket['open']));
 				$now = $i;
@@ -945,8 +945,8 @@ class LetterMark {
 					else
 						return $type.$text.'>>'; 
 				}
-			case '**': // Asteroid Processor, only activated by astProcessor
-			    return $type.$text.$type;
+	/*		case '**': // Asteroid Processor, only activated by astProcessor
+			    return '<b>'.$text.'</b>'; */
 				
 			/* case '{@': #Reply Tag - need to be tested more.
                 if(!self:startsWith($text, ' ')){
@@ -966,14 +966,14 @@ class LetterMark {
         }
     }
 	
-	protected function astProcessor($text, $astparse) { // deal with the parser ** -> Avoid collision with unordered list tag
+	/* protected function astProcessor($text, $astparse) { // deal with the parser ** -> Avoid collision with unordered list tag
 	    if ($astparse === 'true')
 			return textProcessor($text, '**');
 		else
 			return '**'.$text.'**';
 		
 	}
-
+ */
     protected function listParser($text, &$offset) {
         $listTable = array();
         $len = strlen($text);
