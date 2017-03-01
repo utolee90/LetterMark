@@ -164,7 +164,7 @@ class LetterMark2 extends LetterMark {
 
                 return $small_before . $this->formatParser($size[2]) . $small_after;
             } else {
-                return '<pre>' . $text . '</pre>';
+              /*  return '<pre>' . $text . '</pre>'; */
             }
         }
     }

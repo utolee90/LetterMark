@@ -33,12 +33,17 @@ class LetterMark {
 		
 		
         $this->multi_bracket = array( // Render Process Glitch -> Disabled.
-    /*      array(
+		    array( // Nowiki Tag.
+                'open'	=> '/*',
+                'close' => '*/',
+                'multiline' => true,
+                'processor' => array($this,'renderProcessor')),
+            array(
                 'open'	=> '{{{',
                 'close' => '}}}',
                 'multiline' => true,
                 'processor' => array($this,'renderProcessor')),
-            array(
+    /*       array(
                 'open'	=> '<pre>',
                 'close' => '</pre>',
                 'multiline' => true,
@@ -142,6 +147,11 @@ class LetterMark {
                 'close' => '>>',
                 'multiline' => false,
                 'processor' => array($this,'textProcessor')),
+/*			array( # Several Parser, Later Supported
+                'open'	=> '(',
+                'close' => ')',
+                'multiline' => false,
+                'processor' => array($this,'textProcessor')), */
 			/* array( # Bolf Parser, deactivate after blank or  /[\t]*(\*|\#|:|;)
                 'open'	=> '**',
                 'close' => '**',
@@ -213,7 +223,7 @@ class LetterMark {
 		
 			
 
-            foreach($this->multi_bracket as $bracket) { // activate multi_bracket Parser -> Deactivate by make multi_bracket array empty
+            foreach($this->multi_bracket as $bracket) { // activate multi_bracket Parser 
                 if(self::startsWith($text, $bracket['open'], $i) && $innerstr = $this->bracketParser($text, $i, $bracket, false)) {
                     $result .= ''
                         .$this->lineParser($line, '')
@@ -313,10 +323,10 @@ class LetterMark {
                 return '['.$ex_link[0].']';
         }
         $text = preg_replace('/(https?.*?(\.jpeg|\.jpg|\.png|\.gif))/', '<img src="$1">', $text);
-/*      if(preg_match('/(.*)\|(\[\[파일:.*)\]\]/', $text, $filelink)) // File Parser - Open as Image
+/*      if(preg_match('/(.*)\|(\[\[파일:.*)\]\]/', $text, $filelink)) // File Parser - Open as Image, Igonred
             return $filelink[2].'|link='.str_replace(' ', '_',$filelink[1]).']]'; 
 */
-        if(preg_match('/^(파일:.*?(?!\.jpeg|\.jpg|\.png|\.gif))\|(.*)/i', $text, $namu_image)) { //ignore 파일:~ to avoid malfunction.
+        if(preg_match('/^(파일:.*?(?!\.jpeg|\.jpg|\.png|\.gif))\|(.*)/i', $text, $namu_image)) { //ignore 파일:~ to avoid malfunction. Instead Use <<파일:>>
 /*            $properties = explode("&", $namu_image[2]);
 
             foreach($properties as $n => $each_property) {
@@ -563,21 +573,21 @@ class LetterMark {
 		}
 	}
 
-	protected static function startsWith($haystack, $needle, $offset = 0) {
+	protected static function startsWith($haystack, $needle, $offset = 0) { // Check initial characters
 		$len = strlen($needle);
 		if(($offset+$len)>strlen($haystack))
 			return false;
 		return $needle == substr($haystack, $offset, $len);
 	}
 
-	protected static function startsWithi($haystack, $needle, $offset = 0) {
+	protected static function startsWithi($haystack, $needle, $offset = 0) { // Check initial characters
 		$len = strlen($needle);
 		if(($offset+$len)>strlen($haystack))
 			return false;
 		return strtolower($needle) == strtolower(substr($haystack, $offset, $len));
 	}
 
-	protected static function endsWith($haystack, $needle) {
+	protected static function endsWith($haystack, $needle) { // Check n terminal characters.
 		// search forward starting from end minus needle length characters
 		return $needle === "" || (($temp = strlen($haystack) - strlen($needle)) >= 0 && strpos($haystack, $needle, $temp) !== FALSE);
 	}
@@ -797,7 +807,7 @@ class LetterMark {
         switch($type) {
             case '--': #strike effect
             case '~~':
-                if(!self::startsWith($text, ' ') && !self::startsWith($text, 'item-') && !self::endsWith($text, 'UNIQ') && !self::startsWith($text, 'QINU') && !preg_match('/^.*?-.*-QINU/', $text) && !self::startsWith($text, 'h-'))
+                if(!self::startsWith($text, 'item-') && !self::endsWith($text, 'UNIQ') && !self::startsWith($text, 'QINU') && !preg_match('/^.*?-.*-QINU/', $text) && !self::startsWith($text, 'h-'))
                     return '<s>'.$text.'</s>'; // Strikethrough
                 else
                     return $type.$text.$type;
@@ -812,9 +822,11 @@ class LetterMark {
             case '^^':
                 return '<sup>'.$text.'</sup>';
             case ',,':
-                return '<sub>'.$text.'</sub>';
+			    if (!self::startsWith($text, ' ') && !self::startsWith($text, '\t'))
+                    return '<sub>'.$text.'</sub>';
+				else
+					return ',,'.$text.',,'
             case '<!--':
-                return '<!--'.$text.'-->';
 			case '/*': # Alternative Comment Parser
                 return '<!--'.$text.'-->';
             #case '{{|': # text box syntax : deprecated in LetterMark.
@@ -861,14 +873,18 @@ class LetterMark {
 
                     return '<font size="'.$size.' ">'.substr($text, 3).'</font>';
                 }
-				  elseif(self::startsWithi($text, 'n ')||self::startsWithi($text, 'N ')||self::startsWithi($text, 'x') || self::startsWithi($text, 'X') ) #nowiki tag
-				        return '<nowiki>' . substr($text, 2) . '</nowiki>';
+				  elseif(self::startsWithi($text, 'n ')||self::startsWithi($text, 'N ')||self::startsWithi($text, 'x') || self::startsWithi($text, 'X')) { #nowiki tag
+				     if(self::endsWithi($text, ' x') || self::endsWithi($text, ' n') ) // terminator tag.
+					    return '<nowiki>'.substr($text, 2, -2).'</nowiki>';
+					 else 	
+				        return '<nowiki>' . substr($text, 2). '</nowiki>';
+				  }
 				  elseif((self::startsWithi($text, 'f ')||self::startsWithi($text, 'F '))&& preg_match('/^(f|F) ([^\s]*)/', $text, $match) ){ #font face tag
 				        return '<span style="font-family:'.$match[1].'">'.preg_replace('/(f|F) ([^\s]*)/', '', $text).'</span>';					
 				}
 				else {
 
-			return /*'<nowiki>' . $text . '</nowiki>'; */ $type.$text.'}}}'; #Ignore Nowiki 
+			return /*'<nowiki>' . $text . '</nowiki>'; */ '{{{'.$text.'}}}'; #Ignore Nowiki 
                 }
 			case '((': #footnotes of dokuwiki
 			   if(self::startsWith($text, ' ') && !self::endsWith($text, 'UNIQ') && !preg_match('/^.*?-.*-QINU/', $text) && (strlen(substr($text,1))>0) ) {
@@ -882,13 +898,13 @@ class LetterMark {
 						return '(('.$text.'))'; //No whitespace exists between (( & ))  -> (()) to avoid error.
 			   } 	
 			case '$$': #Replace Math Tag
-                if(!self::startsWith($text, 'item-') && !self::endsWith($text, 'UNIQ') && !self::startsWith($text, 'QINU') && !preg_match('/^.*?-.*-QINU/', $text) && !self::startsWith($text, 'h-'))
+                if(!self::startsWith($text, 'h-'))
                     return '<math>'.$text.'</math>'; #
                 else
                     return $type.$text.$type; 
 			case '<<': #File Parser Tag as Namumark/Mediawiki
                 if(preg_match('/^.*?(\.jpeg|\.jpg|\.png|\.gif|\.svg|\.apng|\.bmp|\.tiff?|\.avi|\.mp3|\.mp4|\.ogg|\.oga|\.ogv|\.wma|\.wmv).*/i', $text)){ // File Parser. Format name appears.
-				    if(preg_match('/^(?:(moni|namu|enha|veda|([ㄱ-ㅎㅏ-ㅣ가-힣]+))\:.*?(?!\.jpeg|\.jpg|\.png|\.gif))\|(.*)/i', $text, $namu_image)) { // Namumark Parser if starts with Korean.
+				    if(preg_match('/^(moni|namu|enha|veda|그림|나무|베다|파일|이미지|미디어):.*?(?!\.jpeg|\.jpg|\.png|\.gif))\|(.*)/i', $text, $namu_image)) { // Namumark Parser if starts with Korean.
                         $properties = explode("&", $namu_image[2]);
 
                          foreach($properties as $n => $each_property) {
@@ -935,7 +951,7 @@ class LetterMark {
 					
                 }
 				else{ // describe 《 or 『
-					if(!self::startsWith($text, ' ') ||!self::endsWith($text, ' ') ){ // No whitespace
+					if(!self::startsWith($text, ' ') && !self::endsWith($text, ' ') && !self::startsWith($text, '\t') && !self::endsWith($text, '\t') ){ // No whitespace
 						if (self::startsWith($text, '^') && self::endsWith($text, '^'))
 							return '<span class="unicode">&#x300E;</span>'.substr($text, 1, -1).'<span class="unicode">&#x300F;</span>';
 						else
@@ -945,10 +961,13 @@ class LetterMark {
 					else
 						return $type.$text.'>>'; 
 				}
+/*			case '(' // Special character parser - featured later
+                return self::characterProcessor ($type); */
+			
 	/*		case '**': // Asteroid Processor, only activated by astProcessor
 			    return '<b>'.$text.'</b>'; */
 				
-			/* case '{@': #Reply Tag - need to be tested more.
+			/* case '{@': #Reply Tag - will be implemented future.
                 if(!self:startsWith($text, ' ')){
                     $user_list= preg_split("/(,|;)/", $text);					
 					for ($j=1;$j<=count($user_list);$j++){
@@ -958,9 +977,7 @@ class LetterMark {
 							return ',[[:User:'.$user_list[$j-1].'|'.$user_list[$j-1].']]';
 					}
                 }else
-			         return $type.$text.'}'; */
-			#case '[[[': #Special Page Link Tag - Parser Error Occurs, Disabled. 
-            #     return '[[Special:'.$text.'|['.$text.']]]';			
+			         return $type.$text.'}'; */		
             default:
                 return $type.$text.$type;
         }
@@ -968,7 +985,7 @@ class LetterMark {
 	
 	/* protected function astProcessor($text, $astparse) { // deal with the parser ** -> Avoid collision with unordered list tag
 	    if ($astparse === 'true')
-			return textProcessor($text, '**');
+			return self::textProcessor($text, '**');
 		else
 			return '**'.$text.'**';
 		
@@ -1078,6 +1095,10 @@ class LetterMark {
     }
 
     protected function renderProcessor($text, $type) {
+		if ($type=='/*') { // comment Parser.
+			return '<!--'.$text.'-->'; 
+		}
+			
 
     }
 
