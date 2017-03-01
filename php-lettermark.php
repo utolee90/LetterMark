@@ -825,7 +825,7 @@ class LetterMark {
 			    if (!self::startsWith($text, ' ') && !self::startsWith($text, '\t'))
                     return '<sub>'.$text.'</sub>';
 				else
-					return ',,'.$text.',,'
+					return ',,'.$text.',,';
             case '<!--':
 			case '/*': # Alternative Comment Parser
                 return '<!--'.$text.'-->';
@@ -874,7 +874,7 @@ class LetterMark {
                     return '<font size="'.$size.' ">'.substr($text, 3).'</font>';
                 }
 				  elseif(self::startsWithi($text, 'n ')||self::startsWithi($text, 'N ')||self::startsWithi($text, 'x') || self::startsWithi($text, 'X')) { #nowiki tag
-				     if(self::endsWithi($text, ' x') || self::endsWithi($text, ' n') ) // terminator tag.
+				     if(self::endsWith($text, ' x') || self::endsWith($text, ' n') ) // terminator tag.
 					    return '<nowiki>'.substr($text, 2, -2).'</nowiki>';
 					 else 	
 				        return '<nowiki>' . substr($text, 2). '</nowiki>';
@@ -904,7 +904,7 @@ class LetterMark {
                     return $type.$text.$type; 
 			case '<<': #File Parser Tag as Namumark/Mediawiki
                 if(preg_match('/^.*?(\.jpeg|\.jpg|\.png|\.gif|\.svg|\.apng|\.bmp|\.tiff?|\.avi|\.mp3|\.mp4|\.ogg|\.oga|\.ogv|\.wma|\.wmv).*/i', $text)){ // File Parser. Format name appears.
-				    if(preg_match('/^(moni|namu|enha|veda|그림|나무|베다|파일|이미지|미디어):.*?(?!\.jpeg|\.jpg|\.png|\.gif))\|(.*)/i', $text, $namu_image)) { // Namumark Parser if starts with Korean.
+				    if(preg_match('/^(moni|namu|enha|veda|그림|나무|베다|파일|이미지|미디어):.*?(?!\.jpeg|\.jpg|\.png|\.gif)\|(.*)/i', $text, $namu_image)) { // Namumark Parser if starts with Korean.
                         $properties = explode("&", $namu_image[2]);
 
                          foreach($properties as $n => $each_property) {

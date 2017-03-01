@@ -27,7 +27,7 @@ class LetterMark1 extends LetterMark {
 	protected function renderProcessor($text, $type) {
         if($type == '{{|') {
            /* if(preg_match('/\|-/', $text)) */
-                return $type.$text.$type;
+		     return $type.$text.'|}}';
             /* else
                 return '<poem style="border: 2px solid #d6d2c5; background-color: #f9f4e6; padding: 1em;">'.$text.'</poem>'; */
         } else {
@@ -102,7 +102,7 @@ class LetterMark1 extends LetterMark {
                 }
 
                 return $small_before . $this->formatParser($size[2]) . $small_after;
-            } /else { // Ignore Pre tag.
+            } else { // Ignore Pre tag.
               /*  return '<pre>' . $text . '</pre>'; */
             } 
         }
