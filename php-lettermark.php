@@ -147,16 +147,16 @@ class LetterMark {
                 'close' => '>>',
                 'multiline' => false,
                 'processor' => array($this,'textProcessor')),
-/*			array( # Several Parser, Later Supported
-                'open'	=> '(',
-                'close' => ')',
+			/* array( # Several Parser, Later Supported
+                'open'	=> '&',
+                'close' => ';',
                 'multiline' => false,
-                'processor' => array($this,'textProcessor')), */
-			/* array( # Bolf Parser, deactivate after blank or  /[\t]*(\*|\#|:|;)
+                'processor' => array($this,'textProcessor')),  */
+			 array( # Bolf Parser, deactivate after blank or  /[\t]*(\*|\#|:|;)
                 'open'	=> '**',
                 'close' => '**',
                 'multiline' => false,
-                'processor' => array($this,'astProcessor')),*/			
+                'processor' => array($this,'astProcessor')),			
 		     /* array( # Ping Tag - Needs more improvement.
                 'open'	=> '{@',
                 'close' => '}',
@@ -474,12 +474,12 @@ class LetterMark {
 	}
 
 	protected function formatParser($line) { // Parsing each line - increasing line
-	    $astparse = false; //Line parsing default 
+	    $astparse = true; //Line parsing default 
 		$line_len = strlen($line);
 
 		for($j=0;$j<$line_len;$cr=self::nextChar($line,$j)) {
-			if ($cr != ' ' && $cr != '#' && $cr != '*' && $cr != ':' && $cr != ';')
-				$astparse=true;
+			if ($j==1 && ($cr == ' ' || $cr == '#' || $cr == '*' || $cr == ':' || $cr == ';' || $cr =='' ))
+				$astparse=false; // 첫 문단이 문단기호일 때에는 강제로 끔.
 			foreach($this->single_bracket as $bracket) {
 				$nj=$j;
 				if(self::startsWith($line, $bracket['open'], $j) && $innerstr = $this->bracketParser($line, $nj, $bracket, $astparse)) {
@@ -517,8 +517,8 @@ class LetterMark {
 
 				if((!strlen($innerstr)) ||($bracket['multiline'] && strpos($innerstr, "\n")===false))
 					return false;
-/*				elseif ($bracket['open'] == '**')
-					$result = astProcessor($innerstr,$astparse); */
+				elseif ($bracket['open'] == '**')
+					$result = self::astProcessor($innerstr,$astparse); 
 				else
 					$result = call_user_func_array($bracket['processor'],array($innerstr, $bracket['open']));
 				$now = $i;
@@ -837,10 +837,19 @@ class LetterMark {
                 if(self::startsWith($text, '#!html')) { #html tag.
                    # $html = substr($text, 6);
                    # $html = htmlspecialchars_decode($html);
-                    return /*'<html>'.$html.'</html>'; */ $type.$text.$type;
+			      return /*'<html>'.$html.'</html>'; */ $type.$text.'}}}';
+                } elseif(self::startsWithi($text, '#!wiki') && preg_match('/([^\n]*)\n(((((.*)(\n)?)+)))/', substr($text, 7), $match)) { // Wiki Parser
+                return '<div '.$match[1].'>'.$match[2].'</div>';
                 } elseif(self::startsWithi($text, '#!syntax') && preg_match('/#!syntax ([^\s]*)/', $text, $match)) { # #syntax Tag -> Activagte Syntaxhighlight tag
                     return '<syntaxhighlight lang="'.$match[1].'" line="1">'.preg_replace('/#!syntax ([^\s]*)/', '', $text).'</syntaxhighlight>';
-                } elseif(preg_match('/^#(?:([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})|([A-Za-z]+) ) (.*)$/', $text, $color)) { # Color tag #XXX, #XXXXXX or #color name
+                } elseif(self::startsWithi($text, '#!align') && preg_match('/#!align ([^\s]*)/', $text, $match)) {				// align symbol
+                    return '<div style="text-align:' . $match[1] . ';">' . preg_replace('/#!align ([^\s]*)/', '', $text) . '</div>';
+			    } elseif(self::startsWithi($text, '#!font')) {				// font symbol
+			       $check=explode(';', $text, 2 ); // Explode by ';'
+                    return '<div style="font-family:' . substr($check[0],7) . ';">' . $check[1] . '</div>';
+			    }elseif(self::startsWithi($text, '#!math')) {				// math symbol
+                    return '<math>' . substr($text, 7) . '</math>';
+			    } elseif(preg_match('/^#(?:([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})|([A-Za-z]+) ) (.*)$/', $text, $color)) { # Color tag #XXX, #XXXXXX or #color name
                     if(empty($color[1]) && empty($color[2]))
                         return $text;
                     return '<span style="color: '.(empty($color[1])?$color[2]:'#'.$color[1]).'">'.$this->formatParser($color[3]).'</span>';
@@ -869,9 +878,6 @@ class LetterMark {
                     }
 
                     return $small_before.$this->formatParser($size[2]).$small_after;
-                } elseif(preg_match('/^(S|s)([1-7]) (.*)$/', $text, $size)) { #Font Size Tag
-
-                    return '<font size="'.$size.' ">'.substr($text, 3).'</font>';
                 }
 				  elseif(self::startsWithi($text, 'n ')||self::startsWithi($text, 'N ')||self::startsWithi($text, 'x') || self::startsWithi($text, 'X')) { #nowiki tag
 				     if(self::endsWith($text, ' x') || self::endsWith($text, ' n') ) // terminator tag.
@@ -890,12 +896,18 @@ class LetterMark {
 			   if(self::startsWith($text, ' ') && !self::endsWith($text, 'UNIQ') && !preg_match('/^.*?-.*-QINU/', $text) && (strlen(substr($text,1))>0) ) {
                   return '<ref>'.$text.'</ref>';
                } else { # Note that
-			       $ref= explode(" ", $text, 2);
+			       $ref= explode("|", $text, 2); // Using pipe instead of space
                    if(isset($ref[0]) && isset($ref[1])) {
                         return '<ref name="' . $ref[0] . '">' . $ref[1] . '</ref>';
                     }
-					else
-						return '(('.$text.'))'; //No whitespace exists between (( & ))  -> (()) to avoid error.
+					else{ // No space in front of or behind pipe 
+						if (self::startsWith($text, '|'))
+							return '<ref>'.substr($text, 1).'</ref>';
+						elseif (self::endsWith($text, '|'))
+						    return '<ref name="'.substr($text, -1).'"></ref>"';
+						else
+							return '(('.$text.'))'; //No whitespace exists between (( & ))  -> (()) to avoid error.
+						}
 			   } 	
 			case '$$': #Replace Math Tag
                 if(!self::startsWith($text, 'h-'))
@@ -961,11 +973,14 @@ class LetterMark {
 					else
 						return $type.$text.'>>'; 
 				}
-/*			case '(' // Special character parser - featured later
-                return self::characterProcessor ($type); */
+			case '&': // Special character parser - featured later
+                return self::characterProcessor($type); 
 			
-	/*		case '**': // Asteroid Processor, only activated by astProcessor
-			    return '<b>'.$text.'</b>'; */
+			case '**': // Asteroid Processor, only activated by astProcessor
+			if (self::startsWith($text, ' ') || self::startsWith($text, '\t'))
+				return '**'.$text.'**'; // Prevent Parsing error.
+			else
+			    return '<b>'.$text.'</b>'; 
 				
 			/* case '{@': #Reply Tag - will be implemented future.
                 if(!self:startsWith($text, ' ')){
@@ -983,14 +998,14 @@ class LetterMark {
         }
     }
 	
-	/* protected function astProcessor($text, $astparse) { // deal with the parser ** -> Avoid collision with unordered list tag
-	    if ($astparse === 'true')
+	 protected function astProcessor($text, $astparse) { // deal with the parser ** -> Avoid collision with unordered list tag
+	    if ($astparse == 'true')
 			return self::textProcessor($text, '**');
 		else
 			return '**'.$text.'**';
 		
 	}
- */
+	
     protected function listParser($text, &$offset) {
         $listTable = array();
         $len = strlen($text);
@@ -1095,12 +1110,356 @@ class LetterMark {
     }
 
     protected function renderProcessor($text, $type) {
+
 		if ($type=='/*') { // comment Parser.
 			return '<!--'.$text.'-->'; 
 		}
 			
 
     }
+/*	protected function characterProcessor($text) { // deal with the parser () 
+	    switch($text){
+			case '->': // Arrow symbol
+			    return '&#x2190;';
+			case '<-':
+			    return '&#x2192;';
+			case '^|':
+			    return '&#x2191;';
+			case '|v':
+			    return '&#x2193;';
+			case '<->':
+			    return '&#x2194;';
+			case '^|v':
+			case 'varr':
+			    return '&#x2195;';
+			case '<=':
+			    return '&#x21D0;';
+			case '=>':
+			    return '&#x21D2;';
+			case '^||':
+			    return '&#x21D1;';
+			case '||v':
+			    return '&#x21D3;';
+			case '<=>':
+			    return '&#x21D4;';
+			case '^||v':
+			    return '&#x21D5;';
+			case '^c': // copyright
+			case '^C':
+			case 'copyright':
+			    return '&#169;';
+			case '^r': // Registered 
+			case '^R':
+			case 'registered':
+			    return '&#174;';
+			case 'TM':
+			case '^tm': // Trademark
+			case '^TM':
+			case 'trademark':
+			    return '&#x2122;';
+			case 'ss': // Section
+			case 'section':
+			    return '&#167;';
+			case '+d': // dagger
+			case 'dagger':
+			    return '&#x2020;';
+			case '++d': // double dagger
+			case 'ddagger':
+			    return '&#x2021;';
+			case 'pilcrow': // Pilcrow mark
+			case 'ql':
+			case 'q|':
+			    return '&#182;';
+			case '<|': // triangle symbol
+			case 'ltriangle':
+			    return '&#x25C1;';
+			case '|>':
+			case 'rtriangle':
+			    return '&#x25B7;';
+			case '^_':
+			case 'utriangle':
+			    return '&#x25B3;';
+			case '-v':
+			case 'dtriangle':
+			    return '&#x25BD;';
+			case 'bltriangle':
+			    return '&#x25C0;';
+			case 'brtriangle':
+			    return '&#x25B6;';
+			case 'butriangle':
+			    return '&#x25B2;';
+			case 'bdtriangle':
+			    return '&#x25BC;';
+			case 'deg': // degree symbol
+			    return '&#176;';
+			case 'circ': // circle
+			    return '&#x252f;';
+			case 'bcirc':
+			    return '&#x2b24;';
+			case 'ccirc':
+			    return '&#x25CB;';
+			case 'bccirc':
+			    return '&#x25cf;';
+			case 'bstar':
+			    return '&#x2605;';
+			case 'wstar':
+			case 'star':
+			    return '&#x2606;';
+			case '$00': // Circled numbers
+			    return '&#x24EA;';
+			case '$01':
+			    return '&#x2460;';
+			case '$02':
+			    return '&#x2461;';
+			case '$03':
+			    return '&#x2462;';
+			case '$04':
+			    return '&#x2463;';
+			case '$05':
+			    return '&#x2464;';
+			case '$06':
+			    return '&#x2465;';
+			case '$07':
+			    return '&#x2466;';
+			case '$08':
+			    return '&#x2467;';
+			case '$09':
+			    return '&#x2467;';
+			case '$nm': // Unit symbols
+			    return '&#x339A;';
+			case '$mum':
+			case '$mim':
+			    return '&#x339B;';
+			case '$mm':
+			    return '&#x339C;';
+			case '$cm':
+			    return '&#x339D;';
+			case '$km':
+			    return '&#x339E;';
+			case '$in':
+			    return '&#x33cc;';
+			case '$mm2':
+			    return '&#x339f;';
+			case '$cm2':
+			    return '&#x33A0;';
+			case '$m2':
+			    return '&#x33A1;';
+			case '$km2':
+			    return '&#x33A2;';
+			case '$mm3':
+			    return '&#x33a3;';
+			case '$cm3':
+			    return '&#x33A4;';
+			case '$m3':
+			    return '&#x33A5;';
+			case '$km3':
+			    return '&#x33A6;';
+			case '$mul': // microliter, in tis case avoid collision with mil.
+			    return '&#x3395;';
+			case '$ml':
+			    return '&#x3396;';
+			case '$dl':
+			    return '&#x3397;';
+			case '$kl':
+			    return '&#x3398;';
+			case '$cc':
+			    return '&#x33C4;';
+			case '$ps':
+			    return '&#x33B0;';
+			case '$ns':
+			    return '&#x33B1;';
+			case '$mis':
+			case '$mus':
+			    return '&#x33b2;';
+			case '$ms':
+			    return '&#x33B3;';
+			case '$mug':
+			case '$mig':
+			    return '&#x338D;';
+			case '$mg':
+			    return '&#x338E;';
+			case '$kg':
+			    return '&#x338F;';
+			case '$KB':
+			    return '&#x3385;';
+			case '$MB':
+			case '$MeB':
+			    return '&#x3386;';
+			case '$GB':
+			    return '&#x3387;';
+			case '$Hz':
+			    return '&#x3390;';
+			case '$kHz':
+			    return '&#x3391;';
+			case '$MHz':
+			case '$MeHz':
+			    return '&#x3392;';
+			case '$THz':
+			    return '&#x3393;';
+			case '$pV':
+			    return '&#x33B4;';
+            case '$nV':
+			    return '&#x33B5;';	
+            case '$miV':
+			case '$muV':
+			    return '&#x33B6;';
+            case '$mV':
+                return '&#x33B7;';
+            case '$kV':
+                return '&#x33B8;';
+            case '$MeV': // Avoid collision with mV
+                return '&#x33B9;';
+            case '$pW':
+                return '&#x33BA;';
+            case '$pW':
+                return '&#x33BA;';
+            case '$nW':
+                return '&#x33BB;';
+            case '$miW':
+			case '$muW':
+                return '&#x33BC;';
+            case '$mW':
+                return '&#x33BD;';
+            case '$kW':
+                return '&#x33BE;';
+            case '$MeW': // Avoid Collision with mW
+                return '&#x33BF;';
+			case '$kohm':
+            case '$kOhm':
+                return '&#x33C0;';
+            case '$Mohm':
+            case '$Meohm':
+            case '$MOhm':
+            case '$MeOhm':
+                return '&#x33C1;';
+            case '$pA':
+                return '&#x3380;';
+            case '$nA':
+                return '&#x3381;';
+            case '$muA':
+			case '$miA':
+                return '&#x3382;';
+            case '$mA':
+                return '&#x3383;';
+            case '$kA':
+                return '&#x3384;';
+            case '$mps':
+			case '$m/s':
+                return '&#x33A7;';
+            case '$mps2':
+			case '$m/s2':
+                return '&#x33A8;';
+            case '$rad':
+                return '&#x33AD;';
+            case '$radps':
+			case '$rad/s':
+                return '&#x33AE;';
+            case '$radps2':
+			case '$rad/s2':
+			    return '&#x33AF;';
+			case '$Pa':
+			    return '&#x33A9;';
+			case '$kPa':
+			    return '&#x33AA;';
+			case '$MPa':
+			    return '&#x33AB;';
+			case '$GPa':
+			    return '&#x33AC;';
+			case '$cal':
+			    return '&#x3388;';
+			case '$kcal':
+			    return '&#x3389;';
+			case '$dm':
+			    return '&#x3377;';
+			case '$dm2':
+			    return '&#x3378;';
+			case '$dm3':
+			    return '&#x3379;';
+			case '$fm':
+			    return '&#x3399;';
+			case '$hPa':
+			    return '&#x3371;';
+			case '$da':
+			    return '&#x3372;';
+			case '$AU':
+			    return '&#x3373;';
+			case '$bar':
+			    return '&#x3374;';
+			case '$oV':
+			    return '&#x3375;';
+			case '$pc':
+			    return '&#x3376;';
+			case '$IU':
+			    return '&#x3377;';
+			case '$pF':
+			    return '&#x338A;';
+			case '$nF':
+			    return '&#x338B;';
+			case '$miF':
+			case '$muF':
+			    return '&#x338C;';
+			case '$Bq':
+			    return '&#x33C3;';
+			case '$cd':
+			    return '&#x33C5;';
+			case '$cpkg':
+			case '$c/kg':
+			    return '&#x33C6;';
+			case '$Co.':
+			    return '&#x33C7;';
+			case '$dB':
+			    return '&#x33C8;';
+			case '$Gy':
+			    return '&#x33C9;';
+			case '$ha':
+			    return '&#x33CA;';
+			case '$kt':
+			    return '$#x33CF;';
+			case '$lm':
+			    return '&#x33D0;';
+			case '$ln':
+			    return '&#x33D1;';
+			case '$log':
+			    return '&#x33D2;';
+			case '$mbar': // avoid collision with Megabyte
+			    return '&#x33D4;';
+			case '$mil': // in this case return mil.
+			    return '&#x33D5;';
+			case '$mol':
+			    return '&#x33D6;';
+			case '$pH':
+			    return '&#x33D7;';
+			case '$PR':
+			    return '&#x33DA;';
+			case '$sr':
+			    return '&#x33DB;';
+			case '$Sv':
+			    return '&#x33DC;';
+			case '$Wb':
+			    return '&#x33DD;';
+			case '$Vpm':
+			case '$V/m':
+			    return '&#x33DE;';
+			case '$A/m':
+			case '$Apm':
+			    return '&#x33DF;';
+			case '$gal':
+			    return '&#x33FF;';
+			case '$am':
+			    return '&#x33C2;';
+			case '$pm':
+			    return '&#x33D8;';
+			case '$ppm':
+			    return '&#x33D9;';
+                			
+			default:
+			    return '&'.$text.';';
+				
+					
+			
+			
+		}
+	} */
 
 }
 

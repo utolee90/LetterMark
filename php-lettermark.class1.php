@@ -47,14 +47,22 @@ class LetterMark1 extends LetterMark {
                     $text .= $line . "\n";
                 }
             }
+			if($type == '{{{') {
 
             if(self::startsWithi($text, '#!html')) {
-              /*  return  '<html>' . preg_replace('/UNIQ--.*?--QINU/', '', substr($text, 7)) . '</html>';  $type.$text.$type; */
+	          return  /* '<html>' . preg_replace('/UNIQ--.*?--QINU/', '', substr($text, 7)) . '</html>'; */ '{{{'.$text.'}}}'; 
             } elseif(self::startsWithi($text, '#!wiki') && preg_match('/([^\n]*)\n(((((.*)(\n)?)+)))/', substr($text, 7), $match)) { // Wiki Parser
                 return '<div '.$match[1].'>'.$match[2].'</div>';
             } elseif(self::startsWithi($text, '#!syntax') && preg_match('/#!syntax ([^\s]*)/', $text, $match)) {
                 return '<syntaxhighlight lang="' . $match[1] . '" line="1">' . preg_replace('/#!syntax ([^\s]*)/', '', $text) . '</syntaxhighlight>';
-            } elseif(preg_match('/^\+([1-9])(.*)$/sm', $text, $size)) {
+            } elseif(self::startsWithi($text, '#!align') && preg_match('/#!align ([^\s]*)/', $text, $match)) {				// align symbol
+                    return '<div style="text-align:' . $match[1] . ';">' . preg_replace('/#!align ([^\s]*)/', '', $text) . '</div>';
+			} elseif(self::startsWithi($text, '#!font')) {				// font symbol
+			    $check=explode(';', $text, 2 ); // Explode by ';'
+                    return '<div style="font-family:' . substr($check[0],7) . ';">' . $check[1] . '</div>';
+			} elseif(self::startsWithi($text, '#!math')) {				// math symbol
+                    return '<math>' . substr($text, 7) . '</math>';
+			} elseif(preg_match('/^\+([1-9])(.*)$/sm', $text, $size)) {
                 for ($i=1; $i<=$size[1]; $i++){
                     if(isset($big_before) && isset($big_after)) {
                         $big_before .= '<big>';
@@ -102,13 +110,21 @@ class LetterMark1 extends LetterMark {
                 }
 
                 return $small_before . $this->formatParser($size[2]) . $small_after;
-            } else { // Ignore Pre tag.
-              /*  return '<pre>' . $text . '</pre>'; */
-            } 
+            } elseif(preg_match('/^(x|X|n|N) (.*)$/', $text))  { // Nowiki Tag
+                return '<nowiki>' . $text . '</nowiki>'; 
+            } else 
+				return '{{{'.$text.'}}}';
+			}
+			elseif ($type == '/*')
+			    return '<!--'.$text.'-->';
+			else{
+				
+			}
+				
         }
 	}
 
-
+	
 
 
 	
