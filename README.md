@@ -7,11 +7,11 @@ LetterMark는 [나무위키](https://namu.wiki)에서 사용하는 [나무마크
 본 확장기능은 GNU Affero GPL 3.0에 따라 자유롭게 사용하실 수 있습니다. 라이선스에 대한 자세한 사항은 첨부 문서를 참고하십시오.
 
 ## 의존
-* [Cite 확장기능](https://www.mediawiki.org/wiki/Extension:Cite)
-* [Math 확장기능](https://www.mediawiki.org/wiki/Extension:Math) 또는 [SimpleMathJax 확장기능](https://www.mediawiki.org/wiki/Extension:SimpleMathJax)
-* [Poem 확장기능](https://www.mediawiki.org/wiki/Extension:Poem)
-* [SyntaxHighlight 확장기능](https://www.mediawiki.org/wiki/Extension:SyntaxHighlight)
-
+- [Cite 확장기능](https://www.mediawiki.org/wiki/Extension:Cite)
+- [Math 확장기능](https://www.mediawiki.org/wiki/Extension:Math) 또는 [SimpleMathJax 확장기능](https://www.mediawiki.org/wiki/Extension:SimpleMathJax)
+- [Poem 확장기능](https://www.mediawiki.org/wiki/Extension:Poem)
+- [SyntaxHighlight 확장기능](https://www.mediawiki.org/wiki/Extension:SyntaxHighlight) 혹은 [SyntaxHighlighter 확장기능](https://www.mediawiki.org/wiki/Extension:SyntaxHighlighter) (<nowiki>$parser->setHook( 'source', array( $parser->extSyntaxHighlighter, 'source' ) );</nowiki> 아래에 <nowiki>$parser->setHook( 'source', array( $parser->extSyntaxHighlighter, 'syntaxhighlight' ) );</nowiki>를 입력하셔야 합니다. )  
+ 
 ## 사용 방법
 1. 미디어위키 extensions 폴더에 LetterMark 폴더를 새로 생성합니다. 또는 서버에 직접 git을 이용하실 수 있으면 설치된 미디어위키의 extensions 폴더에서 다음과 같이 명령합니다.
 
@@ -40,9 +40,11 @@ LetterMark는 [나무위키](https://namu.wiki)에서 사용하는 [나무마크
 - 2017/3/1 - <nowiki>~~</nowiki>사용시 뒤에 공백이 있어도 활성화. 멀티라인에 <nowiki>/*</nowiki>로 주석처리할 수 있음. 
 - 2017/3/8 - <nowiki>**</nowiki> 태그 활성화. <nowiki>(( ))</nowiki> 문법 변경 - 이제 공백 대신 파이프라인으로 각주 태그와 각주 내용을 구별할 수 있음. 
 -- <nowiki>{{{f</nowiki>로 글자 변경 제거, 대신 <nowiki>{{{!#font (글자명); (내용)}}}</nowiki>로 글자체 변경 가능. <nowiki>{{{!#align (정렬) (내용)}}}</nowiki>를 이용해서 글자 좌우정렬 기능 추가, <nowiki>{{{!#math (수식)}}}</nowiki>로 수식 추가 가능.
-- 2017/4/1 - <nowiki><nowiki></nowiki>, <nowiki><pre></nowiki> 태그 안에 있는 내용이 사용자가 입력한 원본 대신 LetterMark에 의해 파싱된 내용으로 출력되는 현상 수정.
+- 2017/4/1 - <nowiki><no</nowiki><nowiki>wiki></nowiki>, <nowiki><pr</nowiki><nowiki>e></nowiki> 태그 안에 있는 내용이 사용자가 입력한 원본 대신 LetterMark에 의해 파싱된 내용으로 출력되는 현상 수정.
 
 pre  태그 비출력문제 해결   
 ## 버그
 - 여러줄에 걸쳐서 <nowiki>{{{</nowiki> 태그를 여러 줄에 걸쳐서 사용할 때 내용물이 숨으면서 '{'만 보이는 현상.
 - <nowiki>{{{#!wiki}}}</nowiki> 태그를 한줄에 사용할 때에 제대로 출력하지 못하는 현상.
+- pre 태그 내부에서 첫 줄 뒤의 공백을 제대로 인지하지 못하는 현상 
+- SyntaxHighlighter 확장기능 사용시에 한 줄만 띄울 경우 br이 syntax 사이에 입력되는 현상.
