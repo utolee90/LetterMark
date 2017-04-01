@@ -40,6 +40,7 @@ LetterMark는 [나무위키](https://namu.wiki)에서 사용하는 [나무마크
 - 2017/3/1 - <nowiki>~~</nowiki>사용시 뒤에 공백이 있어도 활성화. 멀티라인에 <nowiki>/*</nowiki>로 주석처리할 수 있음. 
 - 2017/3/8 - <nowiki>**</nowiki> 태그 활성화. <nowiki>(( ))</nowiki> 문법 변경 - 이제 공백 대신 파이프라인으로 각주 태그와 각주 내용을 구별할 수 있음. 
 -- <nowiki>{{{f</nowiki>로 글자 변경 제거, 대신 <nowiki>{{{!#font (글자명); (내용)}}}</nowiki>로 글자체 변경 가능. <nowiki>{{{!#align (정렬) (내용)}}}</nowiki>를 이용해서 글자 좌우정렬 기능 추가, <nowiki>{{{!#math (수식)}}}</nowiki>로 수식 추가 가능.
+- 2017/4/1 - <nowiki><nowiki></nowiki>, <nowiki><pre></nowiki> 태그 안에 있는 내용이 사용자가 입력한 원본 대신 LetterMark에 의해 파싱된 내용으로 출력되는 현상 수정.
 
 pre  태그 비출력문제 해결   
 ## 버그

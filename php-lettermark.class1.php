@@ -25,12 +25,28 @@ class LetterMark1 extends LetterMark {
 	}
 
 	protected function renderProcessor($text, $type) {
-        if($type == '{{|') {
+             if($type=='<nowiki>')  {
+                 return '<nowiki>'.$text.'</nowiki>';
+             }
+             elseif($type=='<pre>')  {
+                 return '<pre>'.$text.'</pre>';
+             }
+        elseif($type == '{{|') {
            /* if(preg_match('/\|-/', $text)) */
 		     return $type.$text.'|}}';
             /* else
                 return '<poem style="border: 2px solid #d6d2c5; background-color: #f9f4e6; padding: 1em;">'.$text.'</poem>'; */
-        } else {
+        }elseif($type == '<source' ) { #ignore br effect
+           /* if(preg_match('/\|-/', $text)) */
+		     return '<source'.$text.'</source>';
+
+        }
+		elseif( $type == '<syntaxhighlight' ) { #ignore br effect
+           /* if(preg_match('/\|-/', $text)) */
+		     return '<syntaxhighlight'.$text.'</syntaxhighlight>';
+
+        }
+		else {
             $lines = explode("\n", $text);
             $text = '';
             foreach($lines as $key => $line) {

@@ -43,22 +43,32 @@ class LetterMark {
                 'close' => '}}}',
                 'multiline' => true,
                 'processor' => array($this,'renderProcessor')),
-    /*       array(
+			array(
+                'open'	=> '<source',
+                'close' => '</source>',
+                'multiline' => true,
+                'processor' => array($this,'renderProcessor')),
+			array(
+                'open'	=> '<syntaxhighlight',
+                'close' => '</syntaxhighlight>',
+                'multiline' => true,
+                'processor' => array($this,'renderProcessor')),
+            array(
                 'open'	=> '<pre>',
                 'close' => '</pre>',
                 'multiline' => true,
                 'processor' => array($this,'renderProcessor')),
-            array(  // Not processed
+       /*   array(  // Not processed
                 'open'	=> '{{|',
                 'close' => '|}}',
                 'multiline' => true,
-                'processor' => array($this,'renderProcessor')), 
+                'processor' => array($this,'renderProcessor')),  */
             array(
                 'open'	=> '<nowiki>',
                 'close' => '</nowiki>',
                 'multiline' => true,
                 'processor' => array($this,'renderProcessor')), 
- */
+ 
         );  
 
         $this->single_bracket = array(
@@ -121,7 +131,17 @@ class LetterMark {
                 'open'	=> '$$',
                 'close' => '$$',
                 'multiline' => false,
-                'processor' => array($this,'textProcessor')),	
+                'processor' => array($this,'textProcessor')),
+			array(
+                'open'	=> '<source',
+                'close' => '</source>',
+                'multiline' => false,
+                'processor' => array($this,'textProcessor')),
+			array(
+                'open'	=> '<syntaxhighlight',
+                'close' => '</syntaxhighlight>',
+                'multiline' => false,
+                'processor' => array($this,'textProcessor')),				
             array(
                 'open'	=> '<!--',
                 'close' => '-->',
@@ -147,7 +167,7 @@ class LetterMark {
                 'close' => '>>',
                 'multiline' => false,
                 'processor' => array($this,'textProcessor')),
-			/* array( # Several Parser, Later Supported
+			/*array( # Several Parser, Later Supported
                 'open'	=> '&',
                 'close' => ';',
                 'multiline' => false,
@@ -201,6 +221,7 @@ class LetterMark {
                 $now = '';
                 continue;
             }
+			
 
 
             if(self::startsWith($text, '|', $i) && $table = $this->tableParser($text, $i)) { // execute tableparser
@@ -800,7 +821,7 @@ class LetterMark {
 	}
 
     protected function textProcessor($otext, $type) {
-        if(/*$type != '{{{' && */ $type != '<nowiki>') # error prevent
+        if( $type != '<source' && $type != '<syntaxhighlight' && $type != '<nowiki>' && $type !='/*') # error prevent
             $text = $this->formatParser($otext);
         else
             $text = $otext;
@@ -967,14 +988,14 @@ class LetterMark {
 						if (self::startsWith($text, '^') && self::endsWith($text, '^'))
 							return '<span class="unicode">&#x300E;</span>'.substr($text, 1, -1).'<span class="unicode">&#x300F;</span>';
 						else
-							return '<span class-"unicode">&#x300A;</span>'.$text.'<span class="unicode">&#x300B;</span>';
+							return '<span class="unicode">&#x300A;</span>'.$text.'<span class="unicode">&#x300B;</span>';
 							
 					}
 					else
 						return $type.$text.'>>'; 
 				}
-			case '&': // Special character parser - featured later
-                return self::characterProcessor($type); 
+			/* case '&': // Special character parser - featured later
+                return self::characterProcessor($type); */
 			
 			case '**': // Asteroid Processor, only activated by astProcessor
 			if (self::startsWith($text, ' ') || self::startsWith($text, '\t'))
@@ -1117,55 +1138,54 @@ class LetterMark {
 			
 
     }
-/*	protected function characterProcessor($text) { // deal with the parser () 
+	/* protected function characterProcessor($text) { // deal with the parser () 
 	    switch($text){
 			case '->': // Arrow symbol
-			    return '&#x2190;';
+			    return '→';
 			case '<-':
-			    return '&#x2192;';
+			    return '←';
 			case '^|':
-			    return '&#x2191;';
+			    return '↑';
 			case '|v':
-			    return '&#x2193;';
+			    return '↓';
 			case '<->':
-			    return '&#x2194;';
+			    return '↔';
 			case '^|v':
-			case 'varr':
-			    return '&#x2195;';
+			    return '↕';
 			case '<=':
-			    return '&#x21D0;';
+			    return '<span style="unicode">&#x21D0;</span>';
 			case '=>':
-			    return '&#x21D2;';
+			    return '<span style="unicode">&#x21D2;</span>;';
 			case '^||':
-			    return '&#x21D1;';
+			    return '<span style="unicode">&#x21D1;</span>;';
 			case '||v':
-			    return '&#x21D3;';
+			    return '<span style="unicode">&#x21D3;</span>;';
 			case '<=>':
-			    return '&#x21D4;';
+			    return '<span style="unicode">&#x21D4;</span>';
 			case '^||v':
-			    return '&#x21D5;';
+			    return '<span style="unicode">&#x21D5;</span>';
 			case '^c': // copyright
 			case '^C':
 			case 'copyright':
-			    return '&#169;';
+			    return '<span style="unicode">&#169;</span>';
 			case '^r': // Registered 
 			case '^R':
 			case 'registered':
-			    return '&#174;';
+			    return '<span style="unicode">&#174;</span>';
 			case 'TM':
 			case '^tm': // Trademark
 			case '^TM':
 			case 'trademark':
-			    return '&#x2122;';
+			    return '<span style="unicode">&#x2122;</span>';
 			case 'ss': // Section
 			case 'section':
-			    return '&#167;';
+			    return '<span style="unicode">&#167;</span>';
 			case '+d': // dagger
 			case 'dagger':
-			    return '&#x2020;';
+			    return '<span style="unicode">&#x2020;</span>';
 			case '++d': // double dagger
 			case 'ddagger':
-			    return '&#x2021;';
+			    return '<span style="unicode">&#x2021;</span>';
 			case 'pilcrow': // Pilcrow mark
 			case 'ql':
 			case 'q|':

@@ -28,7 +28,8 @@ class LetterMark3 extends LetterMark {
             }
 
             foreach($this->multi_bracket as $bracket) {
-                if(self::startsWith($text, $bracket['open'], $i) && $innerstr = $this->bracketParser($text, $i, $bracket)) {
+                if(self::startsWith($text, $bracket['open'], $i) && $innerstr = $this->bracketParser($text, $i, $bracket, $astparse)) {
+                                $astparse=false;
                     $result .= ''
                         .$this->lineParser($line, '')
                         .$innerstr
