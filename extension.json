@@ -1,0 +1,33 @@
+{"manifest_version":2,
+"name":"LetterMark",
+"author":
+  ["[https://github.com/koreapyj koreapyj]",
+  "[https://github.com/Oriwiki Oriwiki]",
+  "[http://exit.plavormind.tk:81/page/User:PlavorSeol PlavorSeol]",
+  "[https://github.com/utolee90 utolee90]"],
+
+"descriptionmsg":"lettermark-description",
+"license-name":"AGPL-3.0-or-later",
+"type":"parserhook",
+"url":"https://github.com/utolee90/LetterMark",
+"version":"1.3",
+
+"AutoloadClasses":
+  {"LetterMark":"parser/php-lettermark.php",
+  "LetterMark1":"parser/php-lettermark.class1.php",
+  "LetterMark2":"parser/php-lettermark.class2.php",
+  "LetterMark3":"parser/php-lettermark.class3.php",
+  "LetterMarkExtra":"parser/LetterMarkExtra.php",
+  "LetterMarkHooks":"hooks.php"},
+"Hooks":
+  {"InternalParseBeforeLinks":"LetterMarkHooks::onInternalParseBeforeLinks",
+  "ParserAfterTidy":"LetterMarkHooks::onParserAfterTidy",
+  "ParserBeforeStrip":"LetterMarkHooks::onParserBeforeStrip",
+  "ParserBeforeTidy":"LetterMarkHooks::onParserBeforeTidy"},
+"MessagesDirs":
+  {"LetterMark":
+    ["messages"]
+  },
+"requires":
+  {"MediaWiki":">=1.34"}
+}
