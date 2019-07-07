@@ -3,7 +3,7 @@ MediaWiki extension for allowing using some [Namumark syntax](https://namu.wiki/
 ## Installation
 Add this to `LocalSettings.php` file:
 ```php
-wfLoadExtension("PlavorMindTweaks");
+wfLoadExtension("LetterMark");
 ```
 ## Used software
 - This software is a fork of [php-namumark-mediawiki](https://github.com/Oriwiki/php-namumark-mediawiki).
