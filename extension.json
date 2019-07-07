@@ -29,5 +29,5 @@
     ["messages"]
   },
 "requires":
-  {"MediaWiki":">=1.34"}
+  {"MediaWiki":">=1.33"}
 }
